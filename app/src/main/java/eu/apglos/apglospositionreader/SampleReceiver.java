@@ -1,6 +1,6 @@
 package eu.apglos.apglospositionreader;
 
-import static android.content.Context.*;
+import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -21,7 +22,7 @@ public class SampleReceiver extends Service {
     private static final String TAG = "PositionUpdateService";
     private static final String CHANNEL_ID = "PositionUpdateChannel";
 
-    private final BroadcastReceiver positionReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver positionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if ("NESTLE on2go.POSITION_UPDATE".equals(intent.getAction())) {
@@ -42,7 +43,7 @@ public class SampleReceiver extends Service {
         startForeground(1, getNotification());
 
         IntentFilter filter = new IntentFilter("NESTLE on2go.POSITION_UPDATE");
-        registerReceiver(positionReceiver, filter, RECEIVER_NOT_EXPORTED);
+        registerReceiver(positionReceiver, filter);
     }
 
     @Override
@@ -63,22 +64,24 @@ public class SampleReceiver extends Service {
     }
 
     private void createNotificationChannel() {
-        NotificationChannel serviceChannel = new NotificationChannel(
-                CHANNEL_ID,
-                "Position Update Service",
-                NotificationManager.IMPORTANCE_LOW
-        );
-        NotificationManager manager = getSystemService(NotificationManager.class);
-        if (manager != null) {
-            manager.createNotificationChannel(serviceChannel);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Position Update Service",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
         }
     }
 
     private Notification getNotification() {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Receiving Location Updates")
-            .setContentText("Listening for POSITION_UPDATE broadcasts")
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-            .build();
+                .setContentTitle("Receiving Location Updates")
+                .setContentText("Listening for POSITION_UPDATE broadcasts")
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .build();
     }
 }
